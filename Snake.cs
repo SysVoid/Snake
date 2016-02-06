@@ -7,7 +7,7 @@ namespace Snake
     class Snake
     {
 
-        public List<Vector2> Locations { get; private set; } = new List<Vector2>();
+        public readonly List<Vector2> Locations = new List<Vector2>();
         public Direction Direction { get; set; } = Direction.Down;
         private int _piecesToAdd = 0;
 
