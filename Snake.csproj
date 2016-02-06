@@ -89,6 +89,7 @@
     <MonoGameContentReference Include="Content\Content.mgcb" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="README.md" />
     <None Include="Snake_TemporaryKey.pfx" />
   </ItemGroup>
   <ItemGroup>
