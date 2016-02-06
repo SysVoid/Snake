@@ -1,8 +1,6 @@
 ﻿using Microsoft.Xna.Framework;
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 
 namespace Snake
 {
@@ -15,18 +13,21 @@ namespace Snake
 
         public Snake(int pieces)
         {
-            if (pieces == 0) { pieces = 1; }
+            if (pieces <= 0) { pieces = 1; }
 
             for (int i = 0; i < pieces; i++)
             {
+                // +1 because I don't want snakes to start on the left edge of the map.
+                // I want a "clearance" column.
                 int j = i + 1;
-                Locations.Add(new Vector2(j*20, 20));
+                Locations.Add(new Vector2(j*SnakeGame.SNAKE_SIZE, SnakeGame.SNAKE_SIZE));
             }
         }
 
         public void Move(Direction direction)
         {
-            int movementAmount = 20;
+            // TODO: Improve this. Remove 1, add 1.
+
             List<Vector2> newLocations = new List<Vector2>();
             Vector2 newPieceLocation = Locations[Locations.Count - 1];
 
@@ -37,37 +38,43 @@ namespace Snake
             }
 
             Vector2 newFirstVector;
-            if (direction == Direction.Up)
+            switch (direction)
             {
-                newFirstVector = new Vector2(Locations[0].X, Locations[0].Y - movementAmount);
-            } else if (direction == Direction.Down)
-            {
-                newFirstVector = new Vector2(Locations[0].X, Locations[0].Y + movementAmount);
-            } else if (direction == Direction.Left)
-            {
-                newFirstVector = new Vector2(Locations[0].X - movementAmount, Locations[0].Y);
-            } else if (direction == Direction.Right)
-            {
-                newFirstVector = new Vector2(Locations[0].X + movementAmount, Locations[0].Y);
-            } else
-            {
-                return;
+                case Direction.Up:
+                    newFirstVector = new Vector2(Locations[0].X, Locations[0].Y - SnakeGame.SNAKE_SIZE);
+                    break;
+                case Direction.Down:
+                    newFirstVector = new Vector2(Locations[0].X, Locations[0].Y + SnakeGame.SNAKE_SIZE);
+                    break;
+                case Direction.Left:
+                    newFirstVector = new Vector2(Locations[0].X - SnakeGame.SNAKE_SIZE, Locations[0].Y);
+                    break;
+                case Direction.Right:
+                    newFirstVector = new Vector2(Locations[0].X + SnakeGame.SNAKE_SIZE, Locations[0].Y);
+                    break;
+                default:
+                    throw new ArgumentException("Direction should be valid!");
             }
             newLocations.Add(newFirstVector);
             newLocations.Reverse();
 
-            if (Locations.Count > 0 && _piecesToAdd > 0)
+            if (_piecesToAdd > 0)
             {
                 // Add one every time the snake moves.
                 _piecesToAdd--;
                 newLocations.Add(newPieceLocation);
             }
 
-            Locations = newLocations;
+            Locations.Clear();
+            foreach (Vector2 newLocation in newLocations)
+            {
+                Locations.Add(newLocation);
+            }
         }
 
         public void AddPiece()
         {
+            // AddPiece() just queues a piece to add for the next render/movement.
             _piecesToAdd++;
         }
 
