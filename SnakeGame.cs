@@ -27,12 +27,19 @@ namespace Snake
         private Color[] _foodColor = new Color[] { Color.Yellow };
         private Texture2D _foodSquare;
 
+        // Food
+        private Color[] _virusColour = new Color[] { Color.Red };
+        private Texture2D _virusSquare;
+
         // Slow down the movement.
         private double _lastMovement = 0;
         private double _gameDelay = 100;
 
         // The food!
         private List<Vector2> _food = new List<Vector2>();
+
+        // The viruses!
+        private List<Vector2> _viruses = new List<Vector2>();
 
         // The size of the snake
         public const int SNAKE_SIZE = 20;
@@ -73,6 +80,10 @@ namespace Snake
             // Food
             _foodSquare = new Texture2D(_graphics.GraphicsDevice, 1, 1);
             _foodSquare.SetData(_foodColor);
+
+            // Virus
+            _virusSquare = new Texture2D(_graphics.GraphicsDevice, 1, 1);
+            _virusSquare.SetData(_virusColour);
         }
 
         protected override void UnloadContent()
@@ -111,16 +122,43 @@ namespace Snake
                 Vector2 foodVector = new Vector2(random.Next(1, MAX_X) * SNAKE_SIZE, random.Next(1, MAX_Y) * SNAKE_SIZE);
 
                 // Check if that piece of food exists already.
-                if (!_food.Contains(foodVector))
+                // Also do the same for viruses.
+                if (!_food.Contains(foodVector) && !_viruses.Contains(foodVector))
                 {
                     // Nope? Add it.
                     _food.Add(foodVector);
                 }
             }
 
+            // Add viruses if there aren't any.
+            if (_viruses.Count == 0)
+            {
+                MoveViruses();
+            }
+
             Window.Title = "Snake [Score: " + (_snake.Locations.Count - 1) + "]";
 
             base.Update(gameTime);
+        }
+
+        private void MoveViruses()
+        {
+            // Make randomness!
+            Random random = new Random();
+            Vector2 virusVector1 = new Vector2(random.Next(1, MAX_X) * SNAKE_SIZE, random.Next(1, MAX_Y) * SNAKE_SIZE);
+            Vector2 virusVector2 = new Vector2(virusVector1.X + SNAKE_SIZE, virusVector1.Y);
+            Vector2 virusVector3 = new Vector2(virusVector1.X + SNAKE_SIZE, virusVector1.Y + SNAKE_SIZE);
+            Vector2 virusVector4 = new Vector2(virusVector1.X, virusVector1.Y + SNAKE_SIZE);
+
+            // Check if a piece of food exists at one of those locations already.
+            if (!_food.Contains(virusVector1) && !_food.Contains(virusVector2) && !_food.Contains(virusVector3) && !_food.Contains(virusVector4))
+            {
+                _viruses.Clear();
+                _viruses.Add(virusVector1);
+                _viruses.Add(virusVector2);
+                _viruses.Add(virusVector3);
+                _viruses.Add(virusVector4);
+            }
         }
 
         private void CheckForDeath()
@@ -156,14 +194,27 @@ namespace Snake
             return false;
         }
 
+        public bool EatVirus()
+        {
+            foreach (Vector2 virus in _viruses)
+            {
+                if (virus.Equals(_snake.Locations[0]))
+                {
+                    return true;
+                }
+            }
+            return false;
+        }
+
         protected override void Draw(GameTime gameTime)
         {
             // Reset the game's display.
             GraphicsDevice.Clear(Color.Black);
-            
+
             // Get the current UNIX time in milliseconds.
             double time = (DateTime.UtcNow - new DateTime(1970, 1, 1)).TotalMilliseconds;
 
+            _spriteBatch.Begin();
             // Only let the snake move every _gameDelay amount of ms.
             if (time - _lastMovement >= _gameDelay)
             {
@@ -172,17 +223,49 @@ namespace Snake
 
                 // Set the new movement time.
                 _lastMovement = (DateTime.UtcNow - new DateTime(1970, 1, 1)).TotalMilliseconds;
+
+                // Only do food things and stuff when they move.
+                // Can the snake eat? Is its head on food?
+                if (EatFood())
+                {
+                    // Yep, remove the food and add a piece to the tail!
+                    _food.Remove(_snake.Locations[0]);
+                    _snake.AddPiece();
+
+                    // Move the virus if they are divisible by 5.
+                    if (_snake.Locations.Count % 5 == 0)
+                    {
+                        MoveViruses();
+                    }
+                }
+
+                // Has the snake run into a virus?
+                if (EatVirus())
+                {
+                    // Yep, darn. Let's remove a piece.
+                    if (_snake.Locations.Count > 1)
+                    {
+                        _snake.Locations.RemoveAt(_snake.Locations.Count - 1);
+                    }
+
+                    // Move the virus.
+                    MoveViruses();
+                }
             }
 
-            _spriteBatch.Begin();
             // Render all food.
             foreach (Vector2 location in _food)
             {
                 _spriteBatch.Draw(_foodSquare, new Rectangle((int) location.X, (int) location.Y, SNAKE_SIZE, SNAKE_SIZE), _foodColor[0]);
             }
 
-            bool head = true;
+            // Render all viruses.
+            foreach (Vector2 location in _viruses)
+            {
+                _spriteBatch.Draw(_virusSquare, new Rectangle((int) location.X, (int) location.Y, SNAKE_SIZE, SNAKE_SIZE), _virusColour[0]);
+            }
 
+            bool head = true;
             // Render each bit of the snake.
             foreach (Vector2 location in _snake.Locations)
             {
@@ -214,14 +297,6 @@ namespace Snake
                     // Draw the tail.
                     _spriteBatch.Draw(_snakeSquare, rectangle, _snakeColor[0]);
                 }
-            }
-
-            // Can the snake eat? Is its head on food?
-            if (EatFood())
-            {
-                // Yep, remove the food and add a piece to the tail!
-                _food.Remove(_snake.Locations[0]);
-                _snake.AddPiece();
             }
             _spriteBatch.End();
 
