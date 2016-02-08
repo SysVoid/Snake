@@ -49,9 +49,7 @@ namespace Snake
             }
 
             // Re-add head location
-            Locations.Reverse();
-            Locations.Add(newFirstVector);
-            Locations.Reverse();
+            Locations.Insert(0, newFirstVector);
 
             if (_piecesToAdd == 0)
             {
