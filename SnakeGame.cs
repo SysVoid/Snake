@@ -246,6 +246,10 @@ namespace Snake
                     if (_snake.Locations.Count > 1)
                     {
                         _snake.Locations.RemoveAt(_snake.Locations.Count - 1);
+                    } else if (_snake.Locations.Count == 1)
+                    {
+                        // Die if pieces = 1.
+                        Exit();
                     }
 
                     // Move the virus.
@@ -272,20 +276,20 @@ namespace Snake
                 int pieceX = (int) location.X;
                 int pieceY = (int) location.Y;
 
-                // Are we out of bounds? Exit.
-                if (pieceX < 0 || pieceX > Window.ClientBounds.Width)
-                {
-                    Exit();
-                } else if (pieceY < 0 || pieceY > Window.ClientBounds.Height)
-                {
-                    Exit();
-                }
-
                 // Prepare the rectangle.
                 Rectangle rectangle = new Rectangle(pieceX, pieceY, SNAKE_SIZE, SNAKE_SIZE);
 
                 if (head)
                 {
+                    // Are we out of bounds? Exit.
+                    if (pieceX < 0 || pieceX > Window.ClientBounds.Width)
+                    {
+                        Exit();
+                    } else if (pieceY < 0 || pieceY > Window.ClientBounds.Height)
+                    {
+                        Exit();
+                    }
+
                     // Draw the head.
                     // The head has slightly different properties.
                     _spriteBatch.Draw(_snakeHeadSquare, rectangle, _snakeHeadColor[0]);
